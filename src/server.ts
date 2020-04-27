@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import {Request, Response } from 'express';
 import express from 'express';
 import bodyParser from 'body-parser';
 import {filterImageFromURL, deleteLocalFiles} from './util/util';
@@ -18,13 +18,18 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
     let url = req.query.image_url;
 
     if (!url) {
-      return res.status(400).send("Image url is required");
+      return res.status(404).send("Image url is required"); 
     }
 
-    const filePath = await filterImageFromURL(url);
-    res.sendFile(filePath, function(){
-      deleteLocalFiles([filePath]);
-    });
+    try{
+      const filePath = await filterImageFromURL(url);
+      res.sendStatus(200).sendFile(filePath, ()=>
+        deleteLocalFiles([filePath])
+      );
+      
+      } catch (error) {
+       return res.status(422).send("Try another image url");
+      }
   });
 
   //! END @TODO1
@@ -35,7 +40,6 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
     res.send("try GET /filteredimage?image_url={{}}")
   } );
   
-
   // Start the Server
   app.listen( port, () => {
       console.log( `server running http://localhost:${ port }` );
